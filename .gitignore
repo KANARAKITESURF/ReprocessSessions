@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+kanara-firestore-DEV.json
+kanara-firestore-PROD.json
+kanara-firestore-TEST.json
