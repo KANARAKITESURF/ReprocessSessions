@@ -7,5 +7,6 @@ class Settings(BaseSettings):
     MONGO_CONNECTION: str
     FITS_BUCKET: str
     SET_SPORT_URL: str
+    NUM_SESSIONS: int
 
 settings = Settings()

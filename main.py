@@ -64,9 +64,11 @@ def get_fit(fit_name):
         return None
 
 
+
+
 threads = []
 with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    for skip in range(0, 1, 5):
+    for skip in range(0, settings.NUM_SESSIONS, 5):
         client = pymongo.MongoClient(settings.MONGO_CONNECTION, tlsCAFile=certifi.where()) #PROD
         db_mongo = client.Kanara
         print(f"Number of elements: {skip}")
