@@ -7,7 +7,9 @@ import pymongo
 import requests
 from bson import ObjectId
 from google.cloud import storage
-from settings import settings
+from settings import Settings
+
+settings = Settings()
 
 
 logger = logging.getLogger()
@@ -62,8 +64,6 @@ def get_fit(fit_name):
         return file.download_as_bytes()
     except Exception:
         return None
-
-
 
 
 threads = []
