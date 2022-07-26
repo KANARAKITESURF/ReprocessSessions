@@ -18,9 +18,12 @@ logger = logging.getLogger()
 storage_client = storage.Client()
 bucket = storage_client.bucket(settings.FITS_BUCKET)
 
+cont = 0
+
 def process_sess(sess):
     fit = get_fit(f"{sess['firestore_user_id']}_{sess['session_id']}.fit")
     if fit is None:
+        print("FIT NO ENCONTRADO")
         return 
     id_mongo = sess["_id"]
     sport_id = sess.get("sport_id", None)
@@ -80,5 +83,9 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         del client
         del db_mongo
         time.sleep(3)
-            
 
+
+#  gcloud config set project kanarafluttertest  
+#  gcloud builds submit --pack image=gcr.io/kanarafluttertest/reporcess-sessions-test
+
+# tras esto hay que editar el job y coger la latest del contenedor de container registry
