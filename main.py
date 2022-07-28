@@ -1,12 +1,13 @@
 import concurrent.futures
 import logging
+import os
 import time
 
 import certifi
 import pymongo
 import requests
-from bson import ObjectId
 from google.cloud import storage
+
 from settings import Settings
 
 settings = Settings()
@@ -18,7 +19,9 @@ logger = logging.getLogger()
 storage_client = storage.Client()
 bucket = storage_client.bucket(settings.FITS_BUCKET)
 
-cont = 0
+TASK_INDEX = int(os.environ.get("CLOUD_RUN_TASK_INDEX", None))
+TASK_COUNT = int(os.environ.get("CLOUD_RUN_TASK_COUNT", None))
+
 
 def process_sess(sess):
     fit = get_fit(f"{sess['firestore_user_id']}_{sess['session_id']}.fit")
@@ -69,20 +72,25 @@ def get_fit(fit_name):
         return None
 
 
-threads = []
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    for skip in range(0, settings.NUM_SESSIONS, 5):
-        client = pymongo.MongoClient(settings.MONGO_CONNECTION, tlsCAFile=certifi.where()) #PROD
-        db_mongo = client.Kanara
-        print(f"Number of elements: {skip}")
-        sess = db_mongo.Sessions.find({}).skip(skip).limit(5).sort("_id", pymongo.DESCENDING)
-        for session in sess:
-            print(session["_id"])
-            future = executor.submit(process_sess, session)
-        client.close()
-        del client
-        del db_mongo
-        time.sleep(3)
+if __name__ is "__main__":
+    if TASK_COUNT is None or TASK_INDEX is None:
+        print("Missing TASK_COUNT or TASK_INDEX")
+        exit()
+
+    from_session = int(TASK_INDEX) * settings.NUM_SESSIONS
+    to_session = from_session + settings.NUM_SESSIONS + 1
+
+    threads = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for skip in range(from_session, to_session, 5):
+            client = pymongo.MongoClient(settings.MONGO_CONNECTION, tlsCAFile=certifi.where())
+            db_mongo = client.Kanara
+            print(f"Number of elements: {skip}")
+            sess = db_mongo.Sessions.find({}).skip(skip).limit(5).sort("_id", pymongo.DESCENDING)
+            for session in sess:
+                print(session["_id"])
+                future = executor.submit(process_sess, session)
+            time.sleep(3)
 
 
 #  gcloud config set project kanarafluttertest  
